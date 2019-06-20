@@ -1,66 +1,38 @@
-/*
-This is the console executable, that makes use of the fSnakeGame class.
-This is handling all user interaction. For game logic, please see fSnakeGame.h.
-*/
+#include <iostream>
+#include "view.h"
+#include <string>
 
-#include "fSnakeGame.h"
 
-// Unreal standards
-using int32 = int;
+using namespace std;
 
-int32 maxheight, maxwidth;
-void PlayGame();
-int32 IsUserReady();
-int32 AskUserToPlayAgain();
-void ClearCentre();
-int32 UserInput();
+int main(int argc, char *argv[]) {
 
-int32 main ()
-{
-    if (IsUserReady() == 'y') // wait for confirmation of the user
-        do {
-            {
-                fSnakeGame NewSnake;
-                //NewSnake.PlayGame();
-            }
+
+    int numberOfPhilosophers = 5;
+    int eatingTime = 4;
+    int thinkingTime = 5;
+
+    char q = 'q';
+
+
+    cout << "This is Dining Philosophers Problem" << std::endl;
+
+    numberOfPhilosophers = std::stoi(argv[1]);
+
+    cout << "Set eating time" << std::endl;
+    cin>>eatingTime;
+
+    cout<<"Set thinking time"<<endl;
+    cin>>thinkingTime;
+
+    view t = view(numberOfPhilosophers,thinkingTime,eatingTime);
+    char ans = 'a';
+    while (true) {
+        ans = wgetch(stdscr);
+        if (ans == q){
+            t.endProblem();
+            break;
         }
-        while (AskUserToPlayAgain() == 'y');
-    return 0;
-}
-
-// clear the screen and centre the cursor
-void ClearCentre(float x, float y)
-{
-    clear(); // clear the screen if the game is played for the 2nd time
-    initscr();
-    noecho();
-    getmaxyx(stdscr, maxheight, maxwidth);
-    move((maxheight/y), (maxwidth/x));
-}
-
-// receive user confirmation
-int32 UserInput()
-{
-    int32 UserInput = getch();
-    refresh();
-    endwin();
-    clear();
-
-    return UserInput;
-}
-
-// print start menu
-int32 IsUserReady()
-{
-    ClearCentre(3, 2.5);
-    printw("Welcome to the Snake Game. Are you ready? (y/n)");
-    return UserInput();
-}
-
-// print end of the game menu and ask user to play again
-int32 AskUserToPlayAgain()
-{
-    ClearCentre(2.5, 2.5);
-    printw("Do you want to play again? (y/n)");
-    return UserInput();
+    }
+    //t.endProblem();
 }
