@@ -1,66 +1,106 @@
-/*
-This is the console executable, that makes use of the fSnakeGame class.
-This is handling all user interaction. For game logic, please see fSnakeGame.h.
-*/
+#include <iostream>
+#include <thread>
+#include <vector>
+#include <chrono>
+#include <ncurses.h>
+#include <signal.h>
+#include "Philosopher.h"
+using  namespace std;
 
-#include "fSnakeGame.h"
+#define width 80
+#define height 24
+#define maxWidth 237
+#define maxHeight 64
 
-// Unreal standards
-using int32 = int;
+int frequencyOfChanges = 3;
 
-int32 maxheight, maxwidth;
-void PlayGame();
-int32 IsUserReady();
-int32 AskUserToPlayAgain();
-void ClearCentre();
-int32 UserInput();
 
-int32 main ()
+//Variables
+int numberOfPhilosophers = 5;
+int eatingTime = 7;
+int thinkingTime = 5;
+int deltaTime = 1;
+int endTime = 120;
+
+bool anwserEnd = false;
+
+vector<thread> threads;
+vector<Philosopher> philosophers;
+char q = 'q';
+
+void* resizedHandler(int sig)
 {
-    if (IsUserReady() == 'y') // wait for confirmation of the user
-        do {
-            {
-                fSnakeGame NewSnake;
-                //NewSnake.PlayGame();
-            }
-        }
-        while (AskUserToPlayAgain() == 'y');
-    return 0;
+    int newHeight, newWidth;
+
+    getmaxyx(stdscr, newHeight, newWidth);
+
+    if(newHeight<maxHeight){
+        if(newWidth<maxWidth){
+            //good size
+        }else wresize(stdscr,newHeight,maxWidth);
+    }else{
+        if(newWidth<maxWidth){
+            wresize(stdscr,maxHeight,newWidth);
+        }else wresize(stdscr,maxHeight,maxWidth);
+    }
 }
 
-// clear the screen and centre the cursor
-void ClearCentre(float x, float y)
-{
-    clear(); // clear the screen if the game is played for the 2nd time
+int main(int argc, char *argv[]) {
+
+    numberOfPhilosophers = std::stoi(argv[1]);
+
+    cout << "This is philosophersProblem" << endl;
+    cout << "Number of Philosophers" << endl;
+
+    cout << numberOfPhilosophers << endl;
     initscr();
+
+    if (has_colors() == false) {
+        endwin();
+        printf("Your ternimal doesn't support color \n");
+        exit(1);
+    }
+
     noecho();
-    getmaxyx(stdscr, maxheight, maxwidth);
-    move((maxheight/y), (maxwidth/x));
-}
-
-// receive user confirmation
-int32 UserInput()
-{
-    int32 UserInput = getch();
+    cbreak();
+    wresize(stdscr, height, width);
+    scrollok(stdscr, TRUE);
+    nodelay(stdscr, TRUE);
+    //keypad(stdscr,TRUE);
+    start_color();
+    init_pair(1, COLOR_BLUE, COLOR_WHITE);
+    init_pair(2, COLOR_RED, COLOR_WHITE);
+    init_pair(3, COLOR_YELLOW, COLOR_GREEN);
+    signal(SIGWINCH, resizedHandler);
+    attron(COLOR_PAIR(1));
     refresh();
-    endwin();
-    clear();
 
-    return UserInput;
-}
+    for (int i = 0; i < numberOfPhilosophers; i++) {
+        philosophers.push_back(Philosopher(i, eatingTime, thinkingTime, endTime, &anwserEnd));
+    }
 
-// print start menu
-int32 IsUserReady()
-{
-    ClearCentre(3, 2.5);
-    printw("Welcome to the Snake Game. Are you ready? (y/n)");
-    return UserInput();
-}
+    refresh();
 
-// print end of the game menu and ask user to play again
-int32 AskUserToPlayAgain()
-{
-    ClearCentre(2.5, 2.5);
-    printw("Do you want to play again? (y/n)");
-    return UserInput();
+    for (int i = 0; i < numberOfPhilosophers; i++) {
+        threads.push_back(std::thread(philosophers[i]));
+    }
+
+
+    while (anwserEnd != true) {
+        if (wgetch(stdscr) == q) {
+            printw("\nProgram konczy prace");
+            attroff(COLOR_PAIR(3));
+            anwserEnd = true;
+            refresh();
+            getch();
+            endwin();
+        }
+    }
+
+    for (auto &t : threads)
+        t.join();
+
+
+    cout << "Program zakonczy dziaanie" << endl;
+    return 0;
 }
